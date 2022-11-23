@@ -2,8 +2,14 @@
 #include <WiFi.h>
 #include <driver/timer.h>
 
-const char* ssid     = "";
-const char* password = "";
+#define AP
+
+#ifndef AP
+  const char* ssid     = "";
+  const char* password = "";
+#else
+  const char *ssid = "HP2545 printer";
+#endif
 
 WiFiServer server(12345);
 
@@ -40,27 +46,31 @@ void setup()
     timerAttachInterrupt(timer, &onTimer, true);
     timerAlarmWrite(timer, 1000000/fs, true);
 
-    Serial.println();
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    #ifndef AP
+      Serial.println();
+      Serial.println();
+      Serial.print("Connecting to ");
+      Serial.println(ssid);
+      WiFi.begin(ssid, password);
+      while (WiFi.status() != WL_CONNECTED) {
+          delay(500);
+          Serial.print(".");
+      }
+      Serial.println("");
+      Serial.println("WiFi connected");
+      Serial.println("IP address: ");
+      Serial.println(WiFi.localIP());
+    #else
+      WiFi.mode(WIFI_AP);
+      WiFi.softAP(ssid);
+      IPAddress myIP = WiFi.softAPIP();
+      Serial.print("AP IP address: ");
+      Serial.println(myIP);
+    #endif
 
     server.begin();
     timerAlarmEnable(timer);
 }
-
 
 
 void loop() {
@@ -76,6 +86,7 @@ void loop() {
 
       if (readiedBuffer!=nullptr) {
         client.write((char*)readiedBuffer,2*buffersSize);
+        readiedBuffer=nullptr;
       }
  
     }
