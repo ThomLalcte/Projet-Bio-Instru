@@ -83,15 +83,14 @@ void loop() {
   WiFiClient client = server.available();
  
   if (client) {
- 
+    Serial.println("Client connected");
     while (client.connected()) {
-      
       if (sampleFlag>0) sampleRoutine();
 
       if (readiedBuffer!=nullptr) {
         client.write((char*)readiedBuffer,2*buffersSize);
         readiedBuffer=nullptr;
-        ledFlag+=(millis()%3)==0;
+        ledFlag+=(micros()%250)==0;
         digitalWrite(ledPin,ledFlag>0);
       }
  
