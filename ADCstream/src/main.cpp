@@ -16,7 +16,7 @@ WiFiServer server(12345);
 hw_timer_t * timer = NULL;
 uint8_t sampleFlag = 0;
 #define fs 1000
-#define ledPin GPIO_NUM_34
+#define ledPin GPIO_NUM_13
 uint8_t ledFlag = 0;
 
 #define qteBuffers 3
@@ -79,7 +79,7 @@ void setup()
 
 void loop() {
 
- 
+  // digitalWrite(ledPin,1);
   WiFiClient client = server.available();
  
   if (client) {
@@ -91,11 +91,12 @@ void loop() {
       if (readiedBuffer!=nullptr) {
         client.write((char*)readiedBuffer,2*buffersSize);
         readiedBuffer=nullptr;
-        ledFlag+=(millis()%300)==0;
+        ledFlag+=(millis()%3)==0;
+        digitalWrite(ledPin,ledFlag>0);
       }
  
     }
- 
+    digitalWrite(ledPin,0);
     client.stop();
     Serial.println("Client disconnected");
  
