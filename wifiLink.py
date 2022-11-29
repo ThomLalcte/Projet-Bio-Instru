@@ -54,7 +54,7 @@ try:
     rms = [[0.001 * index, rms_i] for index, rms_i in enumerate(rms)]
     predictions = clf.predict(rms)
     index_first_movement = predictions.index(1)
-    if(index_first_movement < 100):
+    if(index_first_movement > 100):
         print("Aucun faux départ.")
     else:
         print("Il y a faux départ, la personne est partie en ", index_first_movement, " millisecondes.")
