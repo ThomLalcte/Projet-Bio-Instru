@@ -50,7 +50,8 @@ try:
             break
         startFlag = (data[-1]&128)>0
 
-    predictions = clf.predict(X)
+    rms = formatedData / numpy.max(numpy.abs(formatedData),axis=0)
+    predictions = clf.predict(rms)
     index_first_movement = predictions.index(1)
     if(index_first_movement < 100):
         print("Aucun faux départ.")
