@@ -15,6 +15,7 @@ csvFile = csv.writer(file)
 try:
     while True:
         formatedData = []
+        startFlag = 0
         data = esp.recv(64)
         for i in range(0,len(data),2):
             formatedData.append(data[i]|data[i+1]<<8)

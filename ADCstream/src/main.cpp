@@ -16,6 +16,8 @@ WiFiServer server(12345);
 hw_timer_t * timer = NULL;
 uint8_t sampleFlag = 0;
 #define fs 1000
+#define ledPin GPIO_NUM_34
+uint8_t ledFlag = 0;
 
 #define qteBuffers 3
 #define buffersSize 32
@@ -45,6 +47,8 @@ void setup()
     timer = timerBegin(0, 80, true);
     timerAttachInterrupt(timer, &onTimer, true);
     timerAlarmWrite(timer, 1000000/fs, true);
+
+    pinMode(ledPin,OUTPUT);
 
     #ifndef AP
       Serial.println();
@@ -87,6 +91,7 @@ void loop() {
       if (readiedBuffer!=nullptr) {
         client.write((char*)readiedBuffer,2*buffersSize);
         readiedBuffer=nullptr;
+        ledFlag+=(millis()%300)==0;
       }
  
     }
