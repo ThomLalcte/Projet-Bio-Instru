@@ -41,6 +41,7 @@ try:
         numberOfFormatedData = 0
         formatedData = []
         data = esp.recv(64)
+        startFlag = (data[-1]&128)>0
         for i in range(0,len(data),2):
             currentData = data[i]|data[i+1]<<8
             if(startFlag):
@@ -48,7 +49,6 @@ try:
                 numberOfFormatedData = len(formatedData)
         if(numberOfFormatedData > 1000):
             break
-        startFlag = (data[-1]&128)>0
 
     predictions = clf.predict(X)
     index_first_movement = predictions.index(1)
