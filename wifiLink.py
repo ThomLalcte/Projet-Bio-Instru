@@ -46,11 +46,12 @@ try:
             if(startFlag):
                 formatedData.append(currentData)
                 numberOfFormatedData = len(formatedData)
-        if(numberOfFormatedData > 1000):
+        if(numberOfFormatedData > 900):
             break
         startFlag = (data[-1]&128)>0
 
     rms = formatedData / numpy.max(numpy.abs(formatedData),axis=0)
+    rms = [[0.001 * index, rms_i] for index, rms_i in enumerate(rms)]
     predictions = clf.predict(rms)
     index_first_movement = predictions.index(1)
     if(index_first_movement < 100):
