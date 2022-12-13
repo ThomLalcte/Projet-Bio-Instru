@@ -88,9 +88,10 @@ void loop() {
       if (sampleFlag>0) sampleRoutine();
 
       if (readiedBuffer!=nullptr) {
+        ledFlag+=(micros()%250)==0;
+        readiedBuffer[buffersSize-1]|=0b1000000000000000;
         client.write((char*)readiedBuffer,2*buffersSize);
         readiedBuffer=nullptr;
-        ledFlag+=(micros()%250)==0;
         digitalWrite(ledPin,ledFlag>0);
       }
  

@@ -1,8 +1,10 @@
 import socket
 import csv
 import numpy
+from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from datetime import datetime as dt
 
 HOST = '192.168.0.16'    # The remote host
 HOST = '192.168.4.1'    # The remote host
@@ -12,17 +14,17 @@ esp.connect((HOST, PORT))
 
 formatedData:list[int] = list(range(32))
 
-file = open("data.csv","w",newline="")
+file = open("{}.csv".format(dt.now().strftime("%Y-%m-%d-%H:%M")),"w",newline="")
 csvFile = csv.writer(file)
 
 # We create the X dataset where the first column is the time reaction in seconds and 
 # the second is the intensity of the EMG in mV
-X = numpy.random.rand(1250,2)
+X = numpy.random.rand(4000,2)
 
 # We build the y classification
 y = []
 for x in X:
-    if x[0] <= 0.1 and 0.33 <= x[1]:
+    if 0.625 <= x[1]: #and x[0] <= 0.1:
         y.append(1)
     else:
         y.append(0)
@@ -36,29 +38,70 @@ clf = QuadraticDiscriminantAnalysis()
 clf = clf.fit(X_train, y_train)
 print(clf.score(X_test, y_test))
 
+# # Create a grid here to display the decision regions for each classifier
+# h = 0.02 # not too small step size
+# minimum = numpy.argmin(X, axis=0)
+# x_min = X[minimum[0]][0]
+# y_min = X[minimum[1]][1]
+# maximum = numpy.argmax(X, axis=0)
+# x_max = X[maximum[0]][0]
+# y_max = X[maximum[1]][1]
+# xxgrid, yygrid = numpy.meshgrid(numpy.arange(x_min - h, x_max + h, h), numpy.arange(y_min - h, y_max + h, h))
+
+# # We initialize the plt figure
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+
+# # We will analyze the entire grid and draw it according to its classification
+# Z = clf.predict(numpy.c_[xxgrid.ravel(), yygrid.ravel()])
+# Z = Z.reshape(xxgrid.shape)
+# ax.contourf(xxgrid, yygrid, Z, cmap='Paired_r', alpha=0.75)
+# ax.contour(xxgrid, yygrid, Z, colors='k', linewidths=0.1)
+# ax.scatter(X[:,0], X[:,1], c=y, cmap='Paired_r', edgecolors='k')
+
+# # We show the final result
+# plt.xlabel("Time (sec)")
+# plt.ylabel("Amplitude (V)")
+# plt.show()
+
+SinglePrintFlag = False
+formatedData = []
+
 try:
     while True:
-        numberOfFormatedData = 0
-        formatedData = []
         data = esp.recv(64)
         startFlag = (data[-1]&128)>0
-        for i in range(0,len(data),2):
-            currentData = data[i]|data[i+1]<<8
-            if(startFlag):
+        if(startFlag):
+            if (SinglePrintFlag==False):
+                print("reading")
+                SinglePrintFlag = True
+            for i in range(0,len(data),2):
+                currentData = data[i]|(data[i+1]&0b00001111)<<8
                 formatedData.append(currentData)
-                numberOfFormatedData = len(formatedData)
-        if(numberOfFormatedData > 900):
+        if(len(formatedData) > 900):
+            print("enough data")
             break
-
-    rms = formatedData / numpy.max(numpy.abs(formatedData),axis=0)
-    rms = [[0.001 * index, rms_i] for index, rms_i in enumerate(rms)]
-    predictions = clf.predict(rms)
-    index_first_movement = predictions.index(1)
-    if(index_first_movement > 100):
-        print("Aucun faux départ.")
-    else:
-        print("Il y a faux départ, la personne est partie en ", index_first_movement, " millisecondes.")
+    esp.close()
 
     csvFile.writerow(formatedData)
+    file.close()
+    formatedData_normalized = numpy.array(formatedData) / 2**12
+    # formatedData_normalized = numpy.array(formatedData) / numpy.max(numpy.abs(formatedData),axis=0)
+    rms = []
+    plage = 100//2
+    for offset in range(plage*2,len(formatedData_normalized)-plage):
+        rms.append(numpy.sqrt(numpy.mean(formatedData_normalized[offset-plage*2:offset])))
+        # rms.append(numpy.sqrt(numpy.mean(formatedData_normalized[offset-plage:offset+plage])))
+    rms = [[0.001 * index+plage//1000, rms_i] for index, rms_i in enumerate(rms)]
+    plt.plot(numpy.array(formatedData_normalized))
+    plt.plot(numpy.append(numpy.zeros([50]),numpy.array(rms).transpose()[1]))
+    predictions:numpy.ndarray = clf.predict(rms)
+    try:
+        index_first_movement = numpy.where(predictions==1)[0][0]
+        print("Il y a faux départ, la personne est partie en ", rms[index_first_movement][0] , " millisecondes.")
+    except: 
+        print("Aucun faux départ détecté")
+        
+    plt.show()
 except KeyboardInterrupt:
     file.close()
