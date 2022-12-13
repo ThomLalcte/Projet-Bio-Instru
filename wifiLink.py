@@ -24,8 +24,11 @@ X = numpy.random.rand(4000,2)
 # We build the y classification
 y = []
 for x in X:
-    if 0.625 <= x[1]: #and x[0] <= 0.1:
-        y.append(1)
+    if 0.625 <= x[1]:
+        if x[0] <= 0.1:
+            y.append(1)
+        else:
+            y.append(2)
     else:
         y.append(0)
 y = numpy.array(y)
@@ -96,11 +99,17 @@ try:
     plt.plot(numpy.array(formatedData_normalized))
     plt.plot(numpy.append(numpy.zeros([50]),numpy.array(rms).transpose()[1]))
     predictions:numpy.ndarray = clf.predict(rms)
-    try:
-        index_first_movement = numpy.where(predictions==1)[0][0]
-        print("Il y a faux départ, la personne est partie en ", rms[index_first_movement][0] , " millisecondes.")
-    except: 
-        print("Aucun faux départ détecté")
+    
+    for index, predictions_i in enumerate(predictions.tolist()):
+        if(predictions_i == 1):
+            print("Il y a faux départ, la personne est partie en ", index , " millisecondes.")
+            break
+        elif(predictions_i == 2):
+            print("Il y a bon départ, la personne est partie en ", index , " millisecondes.")
+            break
+        elif(index == len(y) - 1):
+            print("Aucun faux départ détecté")
+            break
         
     plt.show()
 except KeyboardInterrupt:
